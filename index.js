@@ -6,26 +6,52 @@
  */
 
 // Given Parameters
-const vel = 10000; // velocity (km/h)
-const acc = 3; // acceleration (m/s^2)
-const time = 3600; // seconds (1 hour)
-const d = 0; // distance (km)
-const fuel = 5000; // remaining fuel (kg)
-const fbr = 0.5; // fuel burn rate (kg/s)
+const initialState = {
+  velocity: { value: 10000, unit: "km/h" }, 
+  acceleration: { value: 3, unit: "m/s^2" }, 
+  time: { value: 3600, unit: "s" }, 
+  distance: { value: 0, unit: "km" }, 
+  fuel: { value: 5000, unit: "kg" }, 
+  fbr: { value: 0.5, unit: "kg/s" }
+};
+
+function calculateNewState({ velocity, acceleration, time, distance, fuel, fbr }) {
 
 
-const d2 = d + (vel*time) //calcultes new distance
-const rf = fbr*time //calculates remaining fuel
-const vel2 = calcNewVel(acc, vel, time) //calculates new velocity based on acceleration
+  // Convert all units to consistent units (e.g., km/h, m/s, km, kg)
+  const convertedAcc = convertUnit(acceleration, "m/s^2", "km/h^2");
+  const convertedTime = convertUnit(time, "s", "h");
 
-// Pick up an error with how the function below is called and make it robust to such errors
-calcNewVel = (vel, acc, time) => { 
-  return vel + (acc*time)
+  const distance2 = distance.value + (velocity.value * convertedTime.value);
+  const rf = fuel.value - fbr.value * time.value;
+  const vel2 = velocity.value + (convertedAcc.value * convertedTime.value);
+
+  return { velocity: { value: vel2, unit: "km/h" }, acceleration, time, distance: { value: distance2, unit: "km" }, fuel: { value: rf, unit: "kg" }, fbr };
 }
 
-console.log(`Corrected New Velocity: ${vel2} km/h`);
-console.log(`Corrected New Distance: ${d2} km`);
-console.log(`Corrected Remaining Fuel: ${rf} kg`);
+function convertUnit(param, fromUnit, toUnit) {
+  const conversionFactors = {
+    "m/s^2": { "km/h^2": 3.6 * 3600 },
+    "s": { "h": 1 / 3600 }
+  };
+
+  const conversionFactor = conversionFactors[fromUnit][toUnit];
+  if (!conversionFactor) {
+    console.error(`Conversion factor not found for units ${fromUnit} to ${toUnit}.`);
+    return null;
+  }
+
+  const convertedValue = param.value * conversionFactor;
+  return { value: convertedValue, unit: toUnit };
+}
+
+const newState = calculateNewState(initialState);
+
+if (newState) {
+  console.log(`Corrected New Velocity: ${newState.velocity.value} ${newState.velocity.unit}`);
+  console.log(`Corrected New Distance: ${newState.distance.value} ${newState.distance.unit}`);
+  console.log(`Corrected Remaining Fuel: ${newState.fuel.value} ${newState.fuel.unit}`);
+}
 
 
 
